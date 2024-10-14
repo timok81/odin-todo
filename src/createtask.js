@@ -13,7 +13,7 @@ const dataBase = (function () {
 
     function addProject(name, description, tasks) {
         projects.push(createNewProject(name, description, tasks));
-        updateForms(name);
+        updateForms();
     };
 
     function addCategory(name, description, tasks = [], isCategory = 1) {
@@ -22,17 +22,19 @@ const dataBase = (function () {
 
     function deleteProject(projectIndex) {
         projects.splice(projectIndex, 1);
+        updateForms();
     };
 
     return { addProject, addCategory, deleteProject, getProject, getProjects };
 })();
 
 class project {
-    constructor(name, description, tasks = [], isCategory = 0) {
+    constructor(name, description, tasks = [], isCategory = 0, complete=0) {
         this.name = name;
         this.description = description;
         this.tasks = tasks;
         this.isCategory = isCategory;
+        this.complete = complete;
     }
 
     addTask(name, duedate, priority, description, project) {
@@ -45,12 +47,13 @@ class project {
 }
 
 class task {
-    constructor(name, duedate, priority, description, project) {
+    constructor(name, duedate, priority, description, project, complete=0) {
         this.name = name;
         this.duedate = duedate;
         this.priority = priority;
         this.description = description;
         this.project = project;
+        this.complete = complete;
     }
 }
 

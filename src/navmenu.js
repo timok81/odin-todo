@@ -1,5 +1,5 @@
 import { dataBase } from "./createtask";
-import { renderContent, renderMenu } from "./dom";
+import { renderContent, renderMenu, setupMenu } from "./dom";
 
 function clearContent() {
     const content = document.querySelector('#content');
@@ -30,7 +30,7 @@ function submitTask(e) {
     e.preventDefault();
     targetProject.addTask(name, dueDate, priority, description, projectIndex)
     renderContent(targetProject);
-    renderMenu(dataBase.getProjects())
+    renderMenu(dataBase.getProjects());
     taskModal.close();
 }
 
@@ -43,7 +43,40 @@ function submitProject(e) {
     e.preventDefault();
     dataBase.addProject(name, description);
     renderMenu(dataBase.getProjects())
+    setupMenu();
     projectModal.close();
 }
 
-export { submitTask, submitProject };
+function editProject(e, project) {
+    const editProjectModal = document.querySelector('.editprojectmodal')
+    const form = document.querySelector('.editprojectform');
+
+    const name = form.elements.name.value;
+    const description = form.elements.description.value;
+    e.preventDefault();
+    project.name = name;
+    project.description = description;
+    renderContent(project);
+    renderMenu(dataBase.getProjects())
+    setupMenu();
+    editProjectModal.close();
+}
+
+function editTask(e, task, project) {
+    const editTaskModal = document.querySelector('.edittaskmodal')
+    const form = document.querySelector('.edittaskform');
+
+    const name = form.elements.name.value;
+    const description = form.elements.description.value;
+    const priority = form.elements.priority.value;
+    const dueDate = form.elements.duedate.value;
+    e.preventDefault();
+    task.name = name;
+    task.description = description;
+    task.priority = priority;
+    task.duedate = dueDate;
+    renderContent(project);
+    editTaskModal.close();
+}
+
+export { submitTask, submitProject, editProject, editTask };

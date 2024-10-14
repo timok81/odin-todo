@@ -1,37 +1,55 @@
-import { dataBase, project, task } from "./createtask";
-import { submitTask, submitProject } from "./navmenu";
+import { dataBase } from "./createtask";
+import { submitTask, submitProject, editProject, editTask } from "./navmenu";
 import projectImage from "./images/folder-open.svg";
+import completeProjectImage from "./images/check-bold.svg";
 import categoryTodayImage from "./images/calendar.svg"
 import categoryWeekImage from "./images/calendar-week.svg"
 import editImage from "./images/pencil.svg";
 import addImage from "./images/plus-circle.svg";
+import deleteImage from "./images/delete.svg"
 import { isSameISOWeek } from "date-fns";
 
 const taskModal = document.querySelector('.createtaskmodal');
 const projectModal = document.querySelector('.createprojectmodal');
+const addProjectButton = document.querySelector('.addproject');
+const addTaskButton = document.querySelector('.addtask');
+const submitTaskButton = document.querySelector('.newtasksubmit');
+const closeNewTaskButton = document.querySelector('.newtaskclose');
+const submitProjectButton = document.querySelector('.newprojectsubmit');
+const closeNewProjectButton = document.querySelector('.newprojectclose');
 
 //Renders basic menu elements
 function setupMenu() {
-    const addProjectButton = document.querySelector('.addproject');
-    const addTaskButton = document.querySelector('.addtask');
-    const submitTaskButton = document.querySelector('.newtasksubmit');
-    const closeNewTaskButton = document.querySelector('.newtaskclose');
-    const submitProjectButton = document.querySelector('.newprojectsubmit');
-    const closeNewProjectButton = document.querySelector('.newprojectclose');
+    if (dataBase.getProjects().filter((project) => project.isCategory === 0).length > 0) {
+        addTaskButton.classList.remove('addtaskdisabled')
+        addTaskButton.classList.add('addtask')
+        addTaskButton.setAttribute('title', 'Create a new task.')
+        addTaskButton.addEventListener('click', openTaskModal);
+    }
+    else if (dataBase.getProjects().filter((project) => project.isCategory === 0).length === 0) {
+        addTaskButton.removeAttribute('class', 'addtask');
+        addTaskButton.classList.add('addtaskdisabled')
+        addTaskButton.setAttribute('title', 'Tasks can only be created when at least one project is available.')
+        addTaskButton.removeEventListener('click', openTaskModal);
+    }
+    submitTaskButton.addEventListener('click', submitTask)
+    closeNewTaskButton.addEventListener('click', () => taskModal.close())
 
     addProjectButton.addEventListener('click', () => projectModal.show());
     submitProjectButton.addEventListener('click', submitProject)
     closeNewProjectButton.addEventListener('click', () => projectModal.close())
 
-    addTaskButton.addEventListener('click', () => taskModal.showModal());
-    submitTaskButton.addEventListener('click', submitTask)
-    closeNewTaskButton.addEventListener('click', () => taskModal.close())
 };
+
+function openTaskModal() {
+    taskModal.showModal()
+}
 
 //Renders all nav menu items based on projects array from dataBase
 function renderMenu(projects = []) {
     const taskList = document.querySelector('#tasklist');
     const projectList = document.querySelector('#projectlist');
+    const completedProjectsList = document.querySelector('#completedprojectslist');
     const currentProjectItems = document.querySelectorAll('.projectitem');
 
     currentProjectItems.forEach(element => {
@@ -40,11 +58,24 @@ function renderMenu(projects = []) {
 
     for (let i = 0; i < projects.length; i++) {
         if (projects[i].isCategory === 0) {
-            const projectItem = projectList.appendChild(document.createElement('button'));
+            const projectItem = document.createElement('button')
+            if (projects[i].complete === 0) {
+                projectList.appendChild(projectItem);
+            }
+            else if (projects[i].complete === 1) {
+                completedProjectsList.appendChild(projectItem)
+            }
             projectItem.classList.add('projectitem')
-            const projectIcon = projectItem.appendChild(document.createElement('img'));
-            projectIcon.src = projectImage;
-            projectIcon.setAttribute('width', '25px');
+            if (projects[i].complete === 0) {
+                const projectIcon = projectItem.appendChild(document.createElement('img'));
+                projectIcon.src = projectImage;
+                projectIcon.setAttribute('width', '25px');
+            }
+            else if (projects[i].complete === 1) {
+                const projectIcon = projectItem.appendChild(document.createElement('img'));
+                projectIcon.src = completeProjectImage;
+                projectIcon.setAttribute('width', '25px');
+            }
             const projectItemText = projectItem.appendChild(document.createElement('p'));
             projectItemText.textContent = projects[i].name;
 
@@ -70,11 +101,20 @@ function renderMenu(projects = []) {
 }
 
 //Adds new project option to task creation form
-function updateForms(projectName = '', taskName = '') {
-    const projectOptions = document.querySelector('#projectoptions');
-    const newProjectOption = projectOptions.appendChild(document.createElement('option'));
-    newProjectOption.setAttribute('value', projectName);
-    newProjectOption.textContent = projectName;
+function updateForms() {
+    const projectOptions = document.querySelector('#projectoptions')
+    const oldProjectOptions = projectOptions.querySelectorAll('option');
+    oldProjectOptions.forEach(element => {
+        element.remove();
+    });
+    for (let i = 0; i < dataBase.getProjects().length; i++) {
+        if (dataBase.getProjects()[i].isCategory === 0) {
+            const projectOptions = document.querySelector('#projectoptions');
+            const newProjectOption = projectOptions.appendChild(document.createElement('option'));
+            newProjectOption.setAttribute('value', dataBase.getProjects()[i].name);
+            newProjectOption.textContent = dataBase.getProjects()[i].name;
+        }
+    }
 }
 
 //Sets project as auto-selected for task creation form
@@ -90,19 +130,23 @@ function setDefaultProject(projectName) {
     });
 }
 
-//Autoselects currently viewed project and opens the task creation form
+//Opens the task creation form and sets current project as default selection
 function showTaskCreationForm(projectName) {
     setDefaultProject(projectName);
     taskModal.showModal()
 }
 
-//Renders project's data to content div
-function renderContent(project) {
+function clearContent() {
     const oldContent = document.querySelector('#content');
     oldContent.remove();
     const content = document.createElement('div');
     document.body.appendChild(content);
     content.id = 'content';
+}
+
+//Renders project's data to content div
+function renderContent(project) {
+    clearContent();
 
     const projectHeader = content.appendChild(document.createElement('div'));
     projectHeader.classList.add('projectheader')
@@ -110,9 +154,16 @@ function renderContent(project) {
     projectHeaderText.textContent = project.name;
     const editProjectButton = projectHeader.appendChild(document.createElement('button'));
     editProjectButton.classList.add('editbutton');
+    editProjectButton.addEventListener('click', function () { openEditProjectModal(project) })
     const editIcon = editProjectButton.appendChild(document.createElement('img'));
     editIcon.src = editImage;
     editIcon.setAttribute('width', '25px');
+    const deleteProjectButton = projectHeader.appendChild(document.createElement('button'));
+    deleteProjectButton.classList.add('deletebutton');
+    const deleteProjectIcon = deleteProjectButton.appendChild(document.createElement('img'));
+    deleteProjectIcon.src = deleteImage;
+    deleteProjectIcon.setAttribute('width', '25px');
+    deleteProjectButton.addEventListener('click', function () { deleteProject(project) })
 
     const projectDescription = content.appendChild(document.createElement('div'));
     projectDescription.classList.add('projectdescription')
@@ -139,13 +190,13 @@ function renderContent(project) {
     dueDateColumnTitle.classList.add('duedatecolumntitle')
     dueDateColumnTitle.textContent = 'Due';
 
-    //If normal project
+    //Create task for normal project
     if (project.isCategory === 0) {
         for (let i = 0; i < project.tasks.length; i++) {
-            createTaskForList(projectTaskList, project.tasks[i], i)
+            createTaskForList(projectTaskList, project.tasks[i], project)
         }
     }
-    //If category today
+    //Create task for category today
     else if (project.isCategory === 1) {
         const date = new Date();
         const todayDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate()}`;
@@ -153,12 +204,12 @@ function renderContent(project) {
         for (let i = 0; i < dataBase.getProjects().length; i++) {
             for (let j = 0; j < dataBase.getProjects()[i].tasks.length; j++) {
                 if (dataBase.getProjects()[i].tasks[j].duedate === todayDate) {
-                    createTaskForList(projectTaskList, dataBase.getProjects()[i].tasks[j], i, j)
+                    createTaskForList(projectTaskList, dataBase.getProjects()[i].tasks[j], project)
                 }
             }
         }
     }
-    //if category week
+    //Create task for category week
     else if (project.isCategory === 2) {
         const date = new Date();
         const todayDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate()}`;
@@ -166,14 +217,34 @@ function renderContent(project) {
         for (let i = 0; i < dataBase.getProjects().length; i++) {
             for (let j = 0; j < dataBase.getProjects()[i].tasks.length; j++) {
                 if (isSameISOWeek(dataBase.getProjects()[i].tasks[j].duedate, todayDate)) {
-                    createTaskForList(projectTaskList, dataBase.getProjects()[i].tasks[j], i, j)
+                    createTaskForList(projectTaskList, dataBase.getProjects()[i].tasks[j], project)
                 }
             }
         }
     }
+
+    const projectCheckBoxContainer = content.appendChild(document.createElement('div'));
+    projectCheckBoxContainer.classList.add('projectcheckboxcontainer')
+
+    const projectCheckBox = projectCheckBoxContainer.appendChild(document.createElement('input'));
+    projectCheckBox.setAttribute('type', 'checkbox');
+    projectCheckBox.setAttribute('name', 'projectcheckbox');
+    projectCheckBox.setAttribute('id', 'projectcheckbox');
+
+    projectCheckBox.checked = project.complete;
+    projectCheckBox.classList.add('projectcheckbox');
+
+    projectCheckBox.addEventListener('click', function () { toggleProjectComplete(project) })
+
+    const projectCheckBoxLabel = projectCheckBoxContainer.appendChild(document.createElement('label'));
+    projectCheckBoxLabel.setAttribute('for', 'projectcheckbox');
+    projectCheckBoxLabel.classList.add('projectcheckboxlabel');
+    projectCheckBoxLabel.textContent = 'Toggle project complete';
+
 }
 
-function createTaskForList(projectTaskList, task, i = 0, j = 0) {
+//Creates task DOM elements for each task
+function createTaskForList(projectTaskList, task, project) {
     const taskListTask = projectTaskList.appendChild(document.createElement('div'));
     taskListTask.classList.add('tasklisttask');
     taskListTask.id = 'minimizedtask';
@@ -183,15 +254,18 @@ function createTaskForList(projectTaskList, task, i = 0, j = 0) {
     taskCheckBox.setAttribute('name', 'taskcheckbox');
     taskCheckBox.setAttribute('id', 'taskcheckbox');
     taskCheckBox.classList.add('taskcheckbox');
+    taskCheckBox.checked = task.complete;
+
+    taskCheckBox.addEventListener('click', function () { toggleTaskComplete(task) })
 
     const taskListTaskName = taskListTask.appendChild(document.createElement('button'));
     taskListTaskName.classList.add('tasklisttaskname');
     if (task.priority === 'High') {
-    taskListTaskName.classList.add('highpriority');
+        taskListTaskName.classList.add('highpriority');
     }
     if (task.priority === 'Low') {
         taskListTaskName.classList.add('lowpriority');
-        }
+    }
     taskListTaskName.textContent = task.name;
 
     taskListTaskName.addEventListener('click', function () {
@@ -204,12 +278,21 @@ function createTaskForList(projectTaskList, task, i = 0, j = 0) {
 
     const editTaskButton = taskListTask.appendChild(document.createElement('button'));
     editTaskButton.classList.add('editbutton');
+    editTaskButton.addEventListener('click', function () { openEditTaskModal(task, project) })
     const editIcon = editTaskButton.appendChild(document.createElement('img'));
     editIcon.src = editImage;
     editIcon.setAttribute('width', '25px');
+
+    const deleteTaskButton = taskListTask.appendChild(document.createElement('button'));
+    deleteTaskButton.classList.add('deletebutton');
+    const deleteTaskIcon = deleteTaskButton.appendChild(document.createElement('img'));
+    deleteTaskIcon.src = deleteImage;
+    deleteTaskIcon.setAttribute('width', '25px');
+
+    deleteTaskButton.addEventListener('click', function () { deleteTask(task, project) })
 }
 
-//Logic for toggling task big/small
+//Logic for expanding and minimizing tasks
 function toggleTaskSize(task, priority, description) {
     if (task.id === 'minimizedtask') {
         task.style.height = '300px';
@@ -226,14 +309,171 @@ function toggleTaskSize(task, priority, description) {
         taskDescription.textContent = description;
     }
     else {
-        const a = document.querySelector('.tasklisttask-priority');
-        a.remove();
-        const b = document.querySelector('.tasklisttask-description');
-        b.remove();
+        const tPriority = task.querySelector('.tasklisttask-priority');
+        tPriority.remove();
+        const tDescription = task.querySelector('.tasklisttask-description');
+        tDescription.remove();
         task.style.height = '50px';
         task.id = 'minimizedtask';
         task.classList.remove('tasklisttask-expanded');
     }
+}
+
+function toggleTaskComplete(task) {
+    if (task.complete === 0) { task.complete = 1 }
+    else { task.complete = 0 }
+}
+
+function toggleProjectComplete(project) {
+    if (project.complete === 0) {
+        project.complete = 1;
+    }
+    else {
+        project.complete = 0;
+    }
+    renderMenu(dataBase.getProjects());
+}
+
+function deleteProject(project) {
+    dataBase.deleteProject(dataBase.getProjects().indexOf(project));
+    renderMenu(dataBase.getProjects());
+    clearContent();
+    updateForms();
+    setupMenu();
+}
+
+function deleteTask(task, project) {
+    const projectIndex = dataBase.getProjects().indexOf(project);
+    const taskIndex = dataBase.getProjects()[projectIndex].tasks.indexOf(task);
+    dataBase.getProjects()[projectIndex].deleteTask(taskIndex);
+    renderContent(project);
+}
+
+function createEditProjectModal(project) {
+    const editProjectDialog = document.createElement('dialog');
+    editProjectDialog.classList.add('editprojectmodal');
+    document.body.appendChild(editProjectDialog);
+    const header = editProjectDialog.appendChild(document.createElement('h1'));
+    header.textContent = 'Edit Project';
+    const formcontainer = editProjectDialog.appendChild(document.createElement('div'));
+    formcontainer.classList.add('formcontainer');
+    const projectEditForm = formcontainer.appendChild(document.createElement('form'));
+    projectEditForm.classList.add('editprojectform');
+    const editProjectNameContainer = projectEditForm.appendChild(document.createElement('div'));
+    editProjectNameContainer.classList.add('form-row');
+    const editNameLabel = editProjectNameContainer.appendChild(document.createElement('label'));
+    editNameLabel.setAttribute('for', 'name');
+    editNameLabel.textContent = 'Project name: ';
+    const editNameField = editProjectNameContainer.appendChild(document.createElement('input'));
+    editNameField.type = 'text';
+    editNameField.id = 'name';
+    editNameField.name = 'name';
+    editNameField.value = project.name;
+    const editProjectDescContainer = projectEditForm.appendChild(document.createElement('div'));
+    editProjectDescContainer.classList.add('form-row');
+    const editoDescLabel = editProjectDescContainer.appendChild(document.createElement('label'));
+    editoDescLabel.setAttribute('for', 'description');
+    editoDescLabel.textContent = 'Project description: ';
+    const editDescField = editProjectDescContainer.appendChild(document.createElement('textarea'));
+    editDescField.id = 'description';
+    editDescField.name = 'description';
+    editDescField.value = project.description;
+    const editProjectButtonContainer = projectEditForm.appendChild(document.createElement('div'));
+    editProjectButtonContainer.classList.add('buttonsarea');
+    const submitButton = editProjectButtonContainer.appendChild(document.createElement('button'));
+    submitButton.type = 'submit';
+    submitButton.classList.add('editprojectsubmit')
+    submitButton.textContent = 'Submit edit';
+    submitButton.addEventListener('click', function (e) { editProject(e, project) });
+    const closeButton = editProjectButtonContainer.appendChild(document.createElement('button'));
+    closeButton.type = 'button';
+    closeButton.classList.add('editprojectclose')
+    closeButton.textContent = 'Close'
+    closeButton.addEventListener('click', () => editProjectDialog.close() )
+}
+
+function openEditProjectModal(project) {
+    createEditProjectModal(project);
+    const editProjectModal = document.querySelector('.editprojectmodal');
+    editProjectModal.show();
+}
+
+function createEditTaskModal(task, project) {
+    const editTaskDialog = document.createElement('dialog');
+    editTaskDialog.classList.add('edittaskmodal');
+    document.body.appendChild(editTaskDialog);
+    const header = editTaskDialog.appendChild(document.createElement('h1'));
+    header.textContent = 'Edit Task';
+    const formcontainer = editTaskDialog.appendChild(document.createElement('div'));
+    formcontainer.classList.add('formcontainer');
+    const taskEditForm = formcontainer.appendChild(document.createElement('form'));
+    taskEditForm.classList.add('edittaskform');
+    const editTaskNameContainer = taskEditForm.appendChild(document.createElement('div'));
+    editTaskNameContainer.classList.add('form-row');
+    const editNameLabel = editTaskNameContainer.appendChild(document.createElement('label'));
+    editNameLabel.setAttribute('for', 'name');
+    editNameLabel.textContent = 'Task name: ';
+    const editNameField = editTaskNameContainer.appendChild(document.createElement('input'));
+    editNameField.type = 'text';
+    editNameField.id = 'name';
+    editNameField.name = 'name';
+    editNameField.value = task.name;
+    const editdueDateContainer = taskEditForm.appendChild(document.createElement('div'));
+    editdueDateContainer.classList.add('form-row');
+    const editDueDateLabel = editdueDateContainer.appendChild(document.createElement('label'));
+    editDueDateLabel.setAttribute('for', 'duedate')
+    editDueDateLabel.textContent = 'Due date: '
+    const editDueDate = editdueDateContainer.appendChild(document.createElement('input'));
+    editDueDate.type = 'date';
+    editDueDate.id = 'duedate';
+    editDueDate.name = 'duedate';
+    const editPriorityContainer = taskEditForm.appendChild(document.createElement('div'));
+    editPriorityContainer.classList.add('form-row');
+    const editPriorityLabel = editPriorityContainer.appendChild(document.createElement('label'));
+    editPriorityLabel.setAttribute('for', 'priority');
+    editPriorityLabel.textContent = 'Task priority: ';
+    const editPriority = editPriorityContainer.appendChild(document.createElement('select'));
+    editPriority.id = 'priority';
+    editPriority.name = 'priority';
+    const priorityOptionHigh = editPriority.appendChild(document.createElement('option'));
+    priorityOptionHigh.value = 'High';
+    priorityOptionHigh.textContent = 'High';
+    const priorityOptionMedium = editPriority.appendChild(document.createElement('option'));
+    priorityOptionMedium.value = 'Medium';
+    priorityOptionMedium.textContent = 'Medium';
+    const priorityOptionLow = editPriority.appendChild(document.createElement('option'));
+    priorityOptionLow.value = 'Low';
+    priorityOptionLow.textContent = 'Low';
+    if (task.priority === 'High') { priorityOptionHigh.setAttribute('selected', 'true')}
+    else if (task.priority === 'Medium') { priorityOptionMedium.setAttribute('selected', 'true')}
+    else if (task.priority === 'Low') { priorityOptionLow.setAttribute('selected', 'true')};
+    const editTaskDescContainer = taskEditForm.appendChild(document.createElement('div'));
+    editTaskDescContainer.classList.add('form-row');
+    const editoDescLabel = editTaskDescContainer.appendChild(document.createElement('label'));
+    editoDescLabel.setAttribute('for', 'description');
+    editoDescLabel.textContent = 'Task description: ';
+    const editDescField = editTaskDescContainer.appendChild(document.createElement('textarea'));
+    editDescField.id = 'description';
+    editDescField.name = 'description';
+    editDescField.value = task.description;
+    const editTaskButtonContainer = taskEditForm.appendChild(document.createElement('div'));
+    editTaskButtonContainer.classList.add('buttonsarea');
+    const submitButton = editTaskButtonContainer.appendChild(document.createElement('button'));
+    submitButton.type = 'submit';
+    submitButton.classList.add('edittasksubmit')
+    submitButton.textContent = 'Submit edit';
+    submitButton.addEventListener('click', function (e) { editTask(e, task, project) });
+    const closeButton = editTaskButtonContainer.appendChild(document.createElement('button'));
+    closeButton.type = 'button';
+    closeButton.classList.add('edittaskclose')
+    closeButton.textContent = 'Close'
+    closeButton.addEventListener('click', () => editTaskDialog.close() )
+}
+
+function openEditTaskModal(task, project) {
+    createEditTaskModal(task, project);
+    const editTaskModal = document.querySelector('.edittaskmodal');
+    editTaskModal.show();
 }
 
 export { setupMenu, renderMenu, renderContent, updateForms, setDefaultProject }
