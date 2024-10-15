@@ -28,9 +28,27 @@ body {
 
 nav {
     grid-column: 1/2;
+    display: grid;
+    grid-template-rows: 50px 1fr;
     background-color: rgb(240, 240, 240);
-    padding: 32px;
     border-right: 2px solid lightgray;
+}
+
+.mainheader {
+    grid-row: 1/2;
+    font-size: 2em;
+    background-color: rgb(196, 196, 196);
+    align-content: center;    
+}
+
+.mainheader h1 {
+    padding-left: 32px;
+    color: rgb(255, 255, 255);
+}
+
+.navsection {
+    grid-row: 2/3;
+    padding: 7px 16px 16px 16px;
 }
 
 nav ul {
@@ -51,7 +69,6 @@ nav ul {
 .projectitem {
     display: grid;
     grid-template-columns: 50px 1fr;
-
     justify-items: left;
     width: 100%;
 }
@@ -125,7 +142,7 @@ nav ul {
     border-bottom: 1px solid lightgray;
     max-width: 1500px;
     min-width: 800px;
-    align-content: center;
+    align-items: end;
 }
 
 .projectheader>h2 {
@@ -133,34 +150,22 @@ nav ul {
     font-size: 3em;
 }
 
-.projectheader>button {
-    align-self: last baseline;
-}
-
-.editbutton {
-    width: 30px;
-    height: 30px;
-    background: none;
-    border: 0;
-    border-radius: 5px;
-    align-self: center;
-}
-
+.editbutton,
 .deletebutton {
     width: 30px;
     height: 30px;
     background: none;
     border: 0;
     border-radius: 5px;
-    align-self: center;
+
 }
 
 .deletebutton:hover {
-    background-color: rgb(255, 179, 179);
+    filter: invert(16%) sepia(49%) saturate(6456%) hue-rotate(357deg) brightness(114%) contrast(132%);
 }
 
 .editbutton:hover {
-    background-color: rgb(137, 175, 255);
+    filter: invert(29%) sepia(36%) saturate(5661%) hue-rotate(204deg) brightness(103%) contrast(102%);
 }
 
 .projectdescription {
@@ -221,7 +226,7 @@ nav ul {
     margin-bottom: 8px;
     font-size: 1.5em;
     border-radius: 10px;
-    align-content: center;
+    align-items: center;
 }
 
 .tasklisttask-expanded {
@@ -242,7 +247,7 @@ nav ul {
     height: 80%;
     margin-left: 38px;
     padding: 10px;
-    border: 0;
+    border: 1px solid lightgray;
     border-radius: 5px;
     background: none;
     resize: none;
@@ -290,21 +295,21 @@ nav ul {
 .projectcheckboxcontainer {
     display: flex;
     align-items: center;
-    width:fit-content;
+    width: fit-content;
     height: 50px;
     background-color: rgb(240, 240, 240);
     border-radius: 5px;
-    padding: 8px;
+    padding: 8px 16px 8px 16px;
 }
 
 .projectcheckbox {
     width: 25px;
     height: 25px;
-    margin-right: 16px;
+    margin-right: 8px;
 }
 
 .projectcheckboxlabel {
-    font-size: 1.5em;
+    font-size: 1.2em;
 }
 
 .createtaskmodal,
@@ -329,10 +334,14 @@ nav ul {
 }
 
 
-.editprojectmodal,
-.edittaskmodal {
+.editprojectmodal {
     width: 750px;
     height: 400px;
+}
+
+.edittaskmodal {
+    width: 750px;
+    height: 475px;
 }
 
 dialog h1 {

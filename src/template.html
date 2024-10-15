@@ -9,26 +9,32 @@
 
 <body>
     <nav>
-        <ul id="tasklist">
-            <div class="navheader">
-                <img src="images/plus-circle.svg" title="Create a new task" alt="add icon" width="35px"
-                    class="addtask">
-                <h1>Tasks</h1>
-            </div>
-        </ul>
-        <ul id="projectlist">
-            <div class="navheader">
-                <img src="images/plus-circle.svg" title="Create a new project" alt="add icon" width="35px"
-                    class="addproject">
-                <h1>Projects</h1>
-            </div>
-        </ul>
-        <ul id="completedprojectslist">
-            <div class="navheader">
-                <img src="images/checkbox-marked-circle-outline.svg" title="Completed projects" alt="add icon" width="30px">
-                <h1>Completed projects</h1>
-            </div>
-        </ul>
+        <div class="mainheader">
+            <h1>TO-DO APP</h1>
+        </div>
+        <div class="navsection">
+            <ul id="tasklist">
+                <div class="navheader">
+                    <img src="images/plus-circle.svg" title="Create a new task" alt="add icon" width="35px"
+                        class="addtask">
+                    <h1>Tasks</h1>
+                </div>
+            </ul>
+            <ul id="projectlist">
+                <div class="navheader">
+                    <img src="images/plus-circle.svg" title="Create a new project" alt="add icon" width="35px"
+                        class="addproject">
+                    <h1>Projects</h1>
+                </div>
+            </ul>
+            <ul id="completedprojectslist">
+                <div class="navheader">
+                    <img src="images/checkbox-marked-circle-outline.svg" title="Completed projects" alt="add icon"
+                        width="30px">
+                    <h1>Completed projects</h1>
+                </div>
+            </ul>
+        </div>
     </nav>
 
     <dialog class="createtaskmodal">
@@ -58,7 +64,7 @@
                 <div class="form-row">
                     <label for="projectoptions">Project: </label>
                     <select id="projectoptions" name="project">
-                        
+
                     </select>
                 </div>
                 <div class="buttonsarea">

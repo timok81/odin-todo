@@ -1,4 +1,4 @@
-import { dataBase } from "./createtask";
+import { dataBase, saveData } from "./createtask";
 import { renderContent, renderMenu, setupMenu } from "./dom";
 
 function clearContent() {
@@ -56,6 +56,7 @@ function editProject(e, project) {
     e.preventDefault();
     project.name = name;
     project.description = description;
+    saveData();
     renderContent(project);
     renderMenu(dataBase.getProjects())
     setupMenu();
@@ -75,6 +76,7 @@ function editTask(e, task, project) {
     task.description = description;
     task.priority = priority;
     task.duedate = dueDate;
+    saveData();
     renderContent(project);
     editTaskModal.close();
 }
